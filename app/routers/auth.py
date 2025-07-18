@@ -6,6 +6,8 @@ from bson import ObjectId
 from app.db import db
 from app.models.user import UserCreate, UserLogin, UserInDB, Token
 from app.core.config import settings
+from app.core.auth import get_current_user
+
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -49,3 +51,7 @@ async def login(user: UserLogin):
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     return Token(access_token=access_token)
+
+@router.get("/me", response_model=UserInDB)
+async def get_me(current_user: UserInDB = Depends(get_current_user)):
+    return current_user
