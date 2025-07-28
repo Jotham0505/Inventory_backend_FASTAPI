@@ -3,6 +3,7 @@ from typing import List
 from bson import ObjectId
 from app.db import db
 from app.models.inventory import InventoryItemCreate, InventoryItemDB
+from app.models.inventory import SalesUpdate
 
 router = APIRouter(prefix="/api/inventory", tags=["inventory"])
 
@@ -35,3 +36,33 @@ async def delete_item(item_id: str):
     res = await db.inventory.delete_one({"_id": ObjectId(item_id)})
     if not res.deleted_count:
         raise HTTPException(status_code=404, detail="Item not found")
+    
+
+@router.post("/sales/update")
+async def update_sales(data: SalesUpdate):
+    date_str = data.date.isoformat()
+    res = await db.inventory.update_one(
+        {"_id": ObjectId(data.item_id)},
+        {"$set": {f"sales.{date_str}": data.count}}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Sales updated", "date": date_str, "count": data.count}
+
+@router.get("/{item_id}/sales/{date}")
+async def get_sales(item_id: str, date: str):  # date as YYYY-MM-DD string
+    item = await db.inventory.find_one({"_id": ObjectId(item_id)})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    count = item.get("sales", {}).get(date, 0)
+    return {"date": date, "count": count}
+
+@router.delete("/{item_id}/sales/{date}")
+async def delete_sales(item_id: str, date: str):
+    res = await db.inventory.update_one(
+        {"_id": ObjectId(item_id)},
+        {"$unset": {f"sales.{date}": ""}}
+    )
+    if res.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Sales entry not found")
+    return {"message": "Sales entry deleted", "date": date}
