@@ -7,7 +7,7 @@ class InventoryItemCreate(BaseModel):
     name: str
     quantity: int
     price: float
-    supplier: str
+    description: str
 
 class InventoryItemDB(InventoryItemCreate):
     id: str = Field(alias="id")

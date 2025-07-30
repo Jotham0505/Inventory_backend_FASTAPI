@@ -66,3 +66,12 @@ async def delete_sales(item_id: str, date: str):
     if res.modified_count == 0:
         raise HTTPException(status_code=404, detail="Sales entry not found")
     return {"message": "Sales entry deleted", "date": date}
+
+
+#@router.get("/fix-missing-descriptions")
+#async def fix_missing_descriptions():
+#    result = await db["inventory"].update_many(
+#        {"description": {"$exists": False}},
+#        {"$set": {"description": ""}}
+#    )
+#    return {"updated_count": result.modified_count}
