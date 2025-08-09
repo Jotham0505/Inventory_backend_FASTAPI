@@ -75,3 +75,5 @@ async def delete_sales(item_id: str, date: str):
 #        {"$set": {"description": ""}}
 #    )
 #    return {"updated_count": result.modified_count}
+
+# this is the missing desccriptions fix
