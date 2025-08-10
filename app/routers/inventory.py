@@ -2,8 +2,17 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List
 from bson import ObjectId
 from app.db import db
-from app.models.inventory import InventoryItemCreate, InventoryItemDB
-from app.models.inventory import SalesUpdate
+from app.models.inventory import InventoryItemCreate, InventoryItemDB, SalesUpdate
+from pydantic import BaseModel
+
+class QuantityChange(BaseModel):
+    change: int
+
+class SalesUpdateBody(BaseModel):
+    item_id: str
+    date: str  # Expecting format: YYYY-MM-DD
+    count: int
+
 
 router = APIRouter(prefix="/api/inventory", tags=["inventory"])
 
@@ -36,21 +45,57 @@ async def delete_item(item_id: str):
     res = await db.inventory.delete_one({"_id": ObjectId(item_id)})
     if not res.deleted_count:
         raise HTTPException(status_code=404, detail="Item not found")
-    
 
-@router.post("/sales/update")
-async def update_sales(data: SalesUpdate):
-    date_str = data.date.isoformat()
+
+# end point to be able to update the quantity
+@router.patch("/{item_id}/adjust", response_model=InventoryItemDB)
+async def adjust_quantity(item_id: str, data: QuantityChange):
+    """
+    Adjust the quantity of an inventory item.
+    Pass change in the request body as JSON: {"change": 1} or {"change": -1}.
+    """
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+
     res = await db.inventory.update_one(
-        {"_id": ObjectId(data.item_id)},
-        {"$set": {f"sales.{date_str}": data.count}}
+        {"_id": obj_id},
+        {"$inc": {"quantity": data.change}}
     )
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
-    return {"message": "Sales updated", "date": date_str, "count": data.count}
+
+    updated = await db.inventory.find_one({"_id": obj_id})
+    updated["id"] = str(updated["_id"])
+    return InventoryItemDB(**updated)
+
+@router.post("/sales/update")
+async def update_sales(data: SalesUpdateBody):
+    """
+    Update sales for a specific item and date.
+    Pass JSON like:
+    {
+        "item_id": "64b7f9...",
+        "date": "2025-08-10",
+        "count": 5
+    }
+    """
+    try:
+        obj_id = ObjectId(data.item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+
+    res = await db.inventory.update_one(
+        {"_id": obj_id},
+        {"$set": {f"sales.{data.date}": data.count}}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Sales updated", "date": data.date, "count": data.count}
 
 @router.get("/{item_id}/sales/{date}")
-async def get_sales(item_id: str, date: str):  # date as YYYY-MM-DD string
+async def get_sales(item_id: str, date: str):
     item = await db.inventory.find_one({"_id": ObjectId(item_id)})
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
