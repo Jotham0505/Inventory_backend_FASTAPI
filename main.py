@@ -1,7 +1,6 @@
 # main.py
 import uvicorn
 from fastapi import FastAPI
-from app.db import db
 from app.routers import auth, inventory
 
 app = FastAPI(title="Tea Shop Inventory API")
@@ -15,4 +14,5 @@ async def ping_db():
     return {"mongo_ok": res.get("ok")}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+

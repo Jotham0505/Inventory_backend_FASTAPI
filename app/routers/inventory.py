@@ -2,7 +2,6 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from bson import ObjectId
-from app.db import db
 from app.models.inventory import InventoryItemCreate, InventoryItemDB
 from pydantic import BaseModel
 

@@ -3,7 +3,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
 from bson import ObjectId
-from app.db import db
+from app.core.database import db
 from app.models.user import UserCreate, UserLogin, UserInDB, Token
 from app.core.config import settings
 from app.core.auth import get_current_user
