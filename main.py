@@ -1,6 +1,7 @@
 # main.py
 import uvicorn
 from fastapi import FastAPI
+from app.core.database import db
 from app.routers import auth, inventory
 
 app = FastAPI(title="Tea Shop Inventory API")

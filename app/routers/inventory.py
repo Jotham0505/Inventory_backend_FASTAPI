@@ -4,6 +4,7 @@ from typing import List, Optional
 from bson import ObjectId
 from app.models.inventory import InventoryItemCreate, InventoryItemDB
 from pydantic import BaseModel
+from app.core.database import db
 
 router = APIRouter(prefix="/api/inventory", tags=["inventory"])
 
